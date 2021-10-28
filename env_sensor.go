@@ -49,6 +49,18 @@ func (b *EnvSensor) GetTemperature() (value float32) {
 		fmt.Printf("error %s", err)
 		return 0
 	}
-	value = float32(c[0]) / 10
+	raw := (uint16(c[1]) * 2560) + uint16(c[0])
+	value = float32(raw) / 10
+	return
+}
+
+func (b *EnvSensor) GetHumidity() (value float32) {
+	c, err := b.adaptor().ReadCharacteristic("00002a6f-0000-1000-8000-00805f9b34fb")
+	if err != nil {
+		fmt.Printf("error %s", err)
+		return 0
+	}
+	raw := (uint16(c[1]) * 256) + uint16(c[0])
+	value = float32(raw) / 100
 	return
 }

@@ -18,6 +18,7 @@ func main() {
 	work := func() {
 		gobot.Every(5*time.Second, func() {
 			fmt.Printf("Temperature level: %.1f C\n", envAdapt.GetTemperature())
+			fmt.Printf("Humidity level: %.1f%%\n", envAdapt.GetHumidity())
 		})
 	}
 
