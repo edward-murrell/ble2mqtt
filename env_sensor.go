@@ -12,6 +12,11 @@ type EnvSensor struct {
 	gobot.Eventer
 }
 
+type EnvPacket struct {
+	Temperature	float32 `json:"temperature"`
+	Humidity	float32 `json:"humidity"`
+}
+
 // NewBatteryDriver creates a EnvSensor
 func NewEnvironmentSensor(a ble.BLEConnector) *EnvSensor {
 	n := &EnvSensor{
@@ -63,4 +68,11 @@ func (b *EnvSensor) GetHumidity() (value float32) {
 	raw := (uint16(c[1]) * 256) + uint16(c[0])
 	value = float32(raw) / 100
 	return
+}
+
+func (b *EnvSensor) GetPacket() (EnvPacket) {
+	return EnvPacket{
+		Temperature: b.GetTemperature(),
+		Humidity:    b.GetHumidity(),
+	}
 }
