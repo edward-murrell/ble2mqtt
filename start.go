@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"gobot.io/x/gobot"
@@ -27,11 +28,12 @@ func main() {
 
 	bleAdaptor := ble.NewClientAdaptor(os.Args[2])
 	envAdapt := NewEnvironmentSensor(bleAdaptor)
-	envAdapt.Connection().Name()
+	bleAdaptor.Connect()
+	envAdapt.SetName(fmt.Sprintf("%s_%s", envAdapt.Connection().Name(), strings.ReplaceAll(bleAdaptor.Address(), "_", "")))
 
 	work := func() {
 		gobot.Every(5*time.Second, func() {
-			fmt.Printf("Querying %s\n", envAdapt.Connection().Name())
+			fmt.Printf("Querying %s\n", envAdapt.Name())
 			packet := envAdapt.GetPacket()
 
 			fmt.Printf("Temperature level: %.1f C\n", packet.Temperature)
@@ -42,7 +44,7 @@ func main() {
 				fmt.Printf("error marshalling packet: %s", err)
 				return
 			}
-			topic := fmt.Sprintf("sensor/%s/state", envAdapt.Connection().Name())
+			topic := fmt.Sprintf("sensor/%s/state", envAdapt.Name())
 			fmt.Printf("Publishing to topic %s: %s\n", topic, string(jsonBytes))
 
 			mqttAdaptor.Publish("asd", jsonBytes)
