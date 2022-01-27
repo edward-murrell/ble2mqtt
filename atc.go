@@ -53,7 +53,7 @@ func (b *AtcSensor) Name() string  {
 }
 
 // Update device with whatever data was recieved by from the BLE sensor.
-func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change bool, log error) {
+func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change bool, failure error) {
 	if b.name == "UNKNOWN" && update.LocalName() != "" {
 		b.name = update.LocalName()
 		change = true
@@ -61,13 +61,13 @@ func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change 
 
 	data, pErr := update.GetServiceData(b.uuid)
 	if pErr != nil {
-		log = fmt.Errorf("recieved empty data for %s", UUID)
+		failure = fmt.Errorf("recieved empty data for %s", UUID)
 		change = false
 		return
 	}
 
 	if len(data) < 13 {
-		log = fmt.Errorf("recieved service on UUID %s for ATC that it doesn't care about", UUID)
+		failure = fmt.Errorf("recieved service on UUID %s for ATC that it doesn't care about", UUID)
 		change = false
 		return
 	}

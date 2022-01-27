@@ -25,9 +25,9 @@ func main() {
 			if device.Address.String() != mac.String() {
 				continue
 			}
-			change, log := sensor.UpdateDevice(device.AdvertisementPayload)
-			if log != nil {
-				println(log.Error())
+			change, failure := sensor.UpdateDevice(device.AdvertisementPayload)
+			if failure != nil {
+				println(failure.Error())
 			}
 			if change {
 				jsonBytes, err := json.Marshal(sensor.Packet())
