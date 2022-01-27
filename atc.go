@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"tinygo.org/x/bluetooth"
 )
@@ -55,6 +56,7 @@ func (b *AtcSensor) Name() string  {
 func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change bool, log error) {
 	if b.name == "UNKNOWN" && update.LocalName() != "" {
 		b.name = update.LocalName()
+		change = true
 	}
 
 	data, pErr := update.GetServiceData(b.uuid)
@@ -70,8 +72,11 @@ func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change 
 		return
 	}
 
-	b.data = data
-	change = true
+	if bytes.Compare(b.data, data) != 0 {
+		b.data = data
+		change = true
+	}
+
 	return
 }
 
