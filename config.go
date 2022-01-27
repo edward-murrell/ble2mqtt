@@ -30,6 +30,7 @@ func getConfig() (*Config, error) {
 
 		EnvPrefix: "BLE2MQTT_",
 	})
+
 	return config, err
 }
 
