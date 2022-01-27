@@ -11,6 +11,7 @@ require (
 
 require (
 	github.com/JuulLabs-OSS/cbgo v0.0.2 // indirect
+	github.com/asppj/goconfig v0.1.0 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -20,8 +21,10 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/muka/go-bluetooth v0.0.0-20210812063148-b6c83362e27d // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
-	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

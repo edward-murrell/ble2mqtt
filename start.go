@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"gobot.io/x/gobot/platforms/mqtt"
 	"log"
-	"os"
 	"strings"
 	"tinygo.org/x/bluetooth"
 )
 
 
 func main() {
+	config, conErr := getConfig()
+	panicCheck("loading config", conErr)
+
 	var adapter = bluetooth.DefaultAdapter // TODO, allow other than hci0
 	panicCheck("enable BLE stack", adapter.Enable())
 
-	mqttAdaptor := getMqttConnection(os.Args[1])
-
-	sensors := getSensors(os.Args)
+	mqttAdaptor := getMqttConnection(config)
+	sensors := getSensors(config)
 
 	// Enable BLE interface.
 	err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
@@ -36,7 +37,7 @@ func main() {
 					continue
 				}
 
-				topic := fmt.Sprintf("sensor/%s/state", sensor.Name())
+				topic := fmt.Sprintf(config.MQTT.Path, sensor.Name()) // TODO: Move into sensor?
 				fmt.Printf("Publishing to topic %s: %s\n", topic, string(jsonBytes))
 				mqttAdaptor.Publish(topic, jsonBytes)
 			}
@@ -45,18 +46,18 @@ func main() {
 	panicCheck("scan error", err)
 }
 
-func getSensors(args []string) map[bluetooth.MAC]AtcSensor {
-	if len(args) < 3 {
-		log.Fatal("No MAC address(es) specified")
+func getSensors(config *Config) map[bluetooth.MAC]AtcSensor {
+	if len(config.Sensors) == 0 {
+		log.Fatalf("no configured sensors found in configuration file")
 	}
 
-	sensors := make(map[bluetooth.MAC]AtcSensor, len(args)-2)
+	sensors := make(map[bluetooth.MAC]AtcSensor, len(config.Sensors))
 
-	for idx, arg := range args[2:] {
-		arg = strings.Trim(arg, " ")
-		mac, parseE := bluetooth.ParseMAC(arg)
+	for idx, sensorCfg := range config.Sensors {
+		rawMac := strings.Trim(sensorCfg.MAC, " ")
+		mac, parseE := bluetooth.ParseMAC(rawMac)
 		if parseE != nil {
-			log.Fatalf("fatal error on arg %d, %s %s", idx+2, parseE.Error(), arg)
+			log.Fatalf("fatal error on sensorCfg %d, %s %s", idx+2, parseE.Error(), sensorCfg)
 		}
 		sensors[mac] = *NewATCSensor(mac)
 	}
@@ -64,7 +65,8 @@ func getSensors(args []string) map[bluetooth.MAC]AtcSensor {
 	return sensors
 }
 
-func getMqttConnection(address string) *mqtt.Adaptor {
+func getMqttConnection(config *Config) *mqtt.Adaptor {
+	address := fmt.Sprintf("tcp://%s:%d", config.MQTT.Host, config.MQTT.Port)
 	mqttAdaptor := mqtt.NewAdaptor(address, "ble2mqtt")
 	mqttError := mqttAdaptor.Connect()
 	panicCheck("MQTT Connect", mqttError)
