@@ -1,13 +1,24 @@
 BLE 2 MQTT adapter
 
-For use with home assistant and Xiaomi Mijia BT sensors running the ATC firmwar.
+For use with home assistant and Xiaomi Mijia BT sensors running the ATC firmware.
 
-# Running
-The first argument is address of the MQTT server, followed by the MAC addresses of any ATC devices.
+This uses Bluetooth controller scanning, and may interfere with active connections. If you have long-running active
+ bluetooth connections, it's advisable to have more than one bluetooth adapter.
 
-`ble2mqtt tcp://192.168.1.55:1883 A4:C1:38:DB:4D:3C A4:C1:38:A0:30:EC`
+# 1. Configuration
+Copy the example YAML configuration file and modify to suit your installation.
+`cp ble2mqtt.conf.example ble2mqtt.conf`
 
-# Home Assistant Configuration file:
+A minimal configuration requires a single sensor input, and will connect to the MQTT server on localhost, port 1833 if
+ no other configuration is specified.
+
+```yaml
+sensors:
+  - mac: A4:C1:38:DB:12:34 # MAC address of the sensor
+    type: atc              # Currently, only the type atc is supported.
+```
+
+# 2. Home Assistant Configuration file:
 
 Replace ATC_FA1234 with the name of your sensor.
 
@@ -24,3 +35,6 @@ sensor:
     unit_of_measurement: "%"
     value_template: "{{ value_json.humidity }}"
 ```
+
+# 3. Running
+`./ble2mqtt`
