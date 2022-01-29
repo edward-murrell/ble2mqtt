@@ -13,6 +13,9 @@ type AtcSensor struct {
 	mac bluetooth.MAC
 	uuid bluetooth.UUID
 	data []byte
+	temp float32
+	humi float32
+	batt float32
 }
 
 type AtcPacket struct {
@@ -74,6 +77,23 @@ func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change 
 
 	if bytes.Compare(b.data, data) != 0 {
 		b.data = data
+	} else {
+		return
+	}
+
+	temp := b.getTemperature()
+	if temp != b.temp {
+		b.temp = temp
+		change = true
+	}
+	humi := b.getHumidity()
+	if humi != b.humi {
+		b.humi = humi
+		change = true
+	}
+	batt := b.getBattery()
+	if humi != b.batt {
+		b.batt = batt
 		change = true
 	}
 
@@ -87,8 +107,8 @@ func (b *AtcSensor) Packet() AtcPacket {
 	}
 
 	return AtcPacket{
-		Temperature: b.getTemperature(),
-		Humidity:    b.getHumidity(),
-		Battery:     b.getBattery(),
+		Temperature: b.temp,
+		Humidity:    b.humi,
+		Battery:     b.batt,
 	}
 }
