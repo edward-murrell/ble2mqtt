@@ -29,7 +29,7 @@ func (loop *appLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetoot
 		if blePacket.Address.String() != mac.String() {
 			continue
 		}
-		change, failure := sensor.UpdateDevice(blePacket.AdvertisementPayload)
+		change, failure := sensor.UpdateDevice(&blePacket)
 		if failure != nil {
 			println(failure.Error())
 		}

@@ -56,7 +56,7 @@ func (b *AtcSensor) Name() string  {
 }
 
 // Update device with whatever data was recieved by from the BLE sensor.
-func (b *AtcSensor) UpdateDevice(update bluetooth.AdvertisementPayload) (change bool, failure error) {
+func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, failure error) {
 	if b.name == "UNKNOWN" && update.LocalName() != "" {
 		b.name = update.LocalName()
 		change = true
