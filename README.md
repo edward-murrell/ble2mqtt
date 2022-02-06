@@ -7,6 +7,7 @@ This uses Bluetooth controller scanning, and may interfere with active connectio
 
 # 1. Configuration
 Copy the example YAML configuration file and modify to suit your installation.
+
 `cp ble2mqtt.conf.example ble2mqtt.conf`
 
 A minimal configuration requires a single sensor input, and will connect to the MQTT server on localhost, port 1833 if
