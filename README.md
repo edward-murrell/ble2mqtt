@@ -37,5 +37,11 @@ sensor:
     value_template: "{{ value_json.humidity }}"
 ```
 
-# 3. Running
+# 3. Building
+```
+go get
+go build
+```
+
+# 4. Running
 `./ble2mqtt`
