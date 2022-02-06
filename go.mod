@@ -2,7 +2,7 @@ module ble2mqtt
 
 go 1.17
 
-replace tinygo.org/x/bluetooth => /home/edward/work/tinygo-bluetooth
+replace tinygo.org/x/bluetooth => github.com/edward-murrell/tinygo-bluetooth v0.4.1-0.20220206103258-b8ef338039ca
 
 require (
 	github.com/asppj/goconfig v0.1.0
