@@ -30,12 +30,12 @@ func getController(config *Config) (*bluetooth.Adapter, error) {
 	return controller, conErr
 }
 
-func getSensors(config *Config) (map[bluetooth.MAC]AtcSensor, error) {
+func getSensors(config *Config) (sensorStack, error) {
 	if len(config.Sensors) == 0 {
 		return nil, errors.New("no configured sensors found in configuration file")
 	}
 
-	sensors := make(map[bluetooth.MAC]AtcSensor, len(config.Sensors))
+	sensors := make(sensorStack, len(config.Sensors))
 
 	for idx, sensorCfg := range config.Sensors {
 		rawMac := strings.Trim(sensorCfg.MAC, " ")

@@ -3,17 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gobot.io/x/gobot/platforms/mqtt"
 	"tinygo.org/x/bluetooth"
 )
 
+type sensorStack map[bluetooth.MAC]AtcSensor
+
 type appLoop struct {
-	config *Config
-	sensors map[bluetooth.MAC]AtcSensor
-	mqttAdaptor *mqtt.Adaptor
+	config      *Config
+	sensors     sensorStack
+	mqttAdaptor mqttClient
 }
 
-func startListening(adapter *bluetooth.Adapter, sensors map[bluetooth.MAC]AtcSensor, config *Config, mqttAdaptor *mqtt.Adaptor) {
+func startListening(adapter *bluetooth.Adapter, sensors sensorStack, config *Config, mqttAdaptor mqttClient) {
 	loop := &appLoop{
 		config:      config,
 		sensors:     sensors,
@@ -41,8 +42,18 @@ func (loop *appLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetoot
 			}
 
 			topic := fmt.Sprintf(loop.config.MQTT.Path, sensor.Name()) // TODO: Move into sensor?
-			fmt.Printf("Publishing to topic %s: %s\n", topic, string(jsonBytes))
-			loop.mqttAdaptor.Publish(topic, jsonBytes)
+			fmt.Printf("Publishing to topic %s: %s...", topic, string(jsonBytes))
+			success := loop.mqttAdaptor.Publish(topic, jsonBytes)
+			if !success {
+				fmt.Printf("failed\n")
+			} else {
+				fmt.Printf("success\n")
+			}
+
 		}
 	}
+}
+
+type mqttClient interface {
+	Publish(topic string, message []byte) bool
 }
