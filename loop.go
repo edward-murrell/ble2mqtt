@@ -6,7 +6,7 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-type sensorStack map[bluetooth.MAC]AtcSensor
+type sensorStack map[string]AtcSensor
 
 type appLoop struct {
 	config      *Config
@@ -27,7 +27,7 @@ func startListening(adapter *bluetooth.Adapter, sensors sensorStack, config *Con
 
 func (loop *appLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetooth.ScanResult) {
 	for mac, sensor := range loop.sensors {
-		if blePacket.Address.String() != mac.String() {
+		if blePacket.Address.String() != mac {
 			continue
 		}
 		change, failure := sensor.UpdateDevice(&blePacket)

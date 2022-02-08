@@ -43,7 +43,8 @@ func getSensors(config *Config) (sensorStack, error) {
 		if parseE != nil {
 			return nil, fmt.Errorf("fatal error on sensorCfg %d, %s %s", idx+2, parseE.Error(), sensorCfg)
 		}
-		sensors[mac] = *NewATCSensor(mac)
+		// Parsing ensures that MAC formats are identical.
+		sensors[mac.String()] = *NewATCSensor(mac)
 	}
 
 	return sensors, nil
