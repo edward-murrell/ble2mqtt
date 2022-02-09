@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gobot.io/x/gobot/platforms/mqtt"
+	"os"
 	"strings"
 	"tinygo.org/x/bluetooth"
 )
@@ -28,13 +29,17 @@ func main() {
 }
 
 func getLogger(config *Config) *log.Logger {
-	logger := log.New()
-	log.SetFormatter(&log.TextFormatter{
-		DisableTimestamp: false,
-		FullTimestamp: true,
-	})
-	logger.SetLevel(log.DebugLevel)
-	return logger
+	return &log.Logger{
+		Out:          os.Stdout,
+		Formatter:    &log.TextFormatter{
+			DisableTimestamp: false,
+			FullTimestamp: true,
+		},
+		Hooks:        make(log.LevelHooks),
+		Level:        log.DebugLevel,
+		ExitFunc:     os.Exit,
+		ReportCaller: false,
+	}
 }
 
 func getController(config *Config) (*bluetooth.Adapter, error) {
