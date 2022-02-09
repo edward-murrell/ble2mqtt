@@ -54,6 +54,26 @@ func TestAtcSensor(t *testing.T) {
 		assert.Nil(t, err2)
 		assert.Equal(t, expectedPacket, actual)
 	})
+
+	t.Run("Test data output with a same data input data, but ignored data not generate a change notification", func(t *testing.T) {
+		update1 := createFakeAtcResult(bluetooth.MACAddress{}, "NEW_NAME", []byte{0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x02, 0x24, 0x39, 0x49, 0x11, 0xc2, 0x13})
+		update2 := createFakeAtcResult(bluetooth.MACAddress{}, "NEW_NAME", []byte{0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x02, 0x24, 0x39, 0x49, 0xfa, 0xfb, 0xfc})
+		expectedPacket := AtcPacket{
+			Temperature: 54.8,
+			Humidity:    57,
+			Battery:     73,
+		}
+		sensor := NewATCSensor(mac)
+		response1, err1 := sensor.UpdateDevice(update1)
+		response2, err2 := sensor.UpdateDevice(update2)
+
+		actual := sensor.Packet()
+		assert.Equal(t, true, response1)
+		assert.Equal(t, false, response2)
+		assert.Nil(t, err1)
+		assert.Nil(t, err2)
+		assert.Equal(t, expectedPacket, actual)
+	})
 }
 
 func createFakeAtcResult(mac bluetooth.MACAddress, name string, payload []byte) *bluetooth.ScanResult {
