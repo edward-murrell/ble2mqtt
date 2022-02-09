@@ -10,19 +10,7 @@ func TestAtcSensor(t *testing.T) {
 	mac, _ := bluetooth.ParseMAC("AA:BB:CC:11:22:34")
 
 	t.Run("Test Name updated", func(t *testing.T) {
-		update := &bluetooth.ScanResult{
-			Address: bluetooth.MACAddress{},
-			RSSI:    50,
-			AdvertisementPayload: &bluetooth.InternalAdvertisementFields{
-				AdvertisementFields: bluetooth.AdvertisementFields{
-					LocalName:    "NEW_NAME",
-					ServiceUUIDs: []bluetooth.UUID{},
-					ServiceData:  map[string][]byte{
-						"0000181a-0000-1000-8000-00805f9b34fb": {0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x01, 0x18, 0x29, 0x59, 0x0b, 0xc2, 0x13},
-					},
-				},
-			},
-		}
+		update := createFakeAtcResult(bluetooth.MACAddress{}, "NEW_NAME", []byte{0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x01, 0x18, 0x29, 0x59, 0x0b, 0xc2, 0x13})
 		sensor := NewATCSensor(mac)
 
 		response, err := sensor.UpdateDevice(update)
@@ -33,20 +21,8 @@ func TestAtcSensor(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("Test data output", func(t *testing.T) {
-		update := &bluetooth.ScanResult{
-			Address: bluetooth.MACAddress{},
-			RSSI:    50,
-			AdvertisementPayload: &bluetooth.InternalAdvertisementFields{
-				AdvertisementFields: bluetooth.AdvertisementFields{
-					LocalName:    "NEW_NAME",
-					ServiceUUIDs: []bluetooth.UUID{},
-					ServiceData:  map[string][]byte{
-						"0000181a-0000-1000-8000-00805f9b34fb": {0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x01, 0x14, 0x29, 0x59, 0x0b, 0xc2, 0x13},
-					},
-				},
-			},
-		}
+	t.Run("Test data output from a sensor that has not seen any data before", func(t *testing.T) {
+		update := createFakeAtcResult(bluetooth.MACAddress{}, "NEW_NAME", []byte{0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x01, 0x14, 0x29, 0x59, 0x0b, 0xc2, 0x13})
 		expected := AtcPacket{
 			Temperature: 27.6,
 			Humidity:    41,
@@ -60,20 +36,8 @@ func TestAtcSensor(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 
-	t.Run("Test data output", func(t *testing.T) {
-		update := &bluetooth.ScanResult{
-			Address: bluetooth.MACAddress{},
-			RSSI:    50,
-			AdvertisementPayload: &bluetooth.InternalAdvertisementFields{
-				AdvertisementFields: bluetooth.AdvertisementFields{
-					LocalName:    "NEW_NAME",
-					ServiceUUIDs: []bluetooth.UUID{},
-					ServiceData:  map[string][]byte{
-						"0000181a-0000-1000-8000-00805f9b34fb": {0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x01, 0x14, 0x29, 0x59, 0x0b, 0xc2, 0x13},
-					},
-				},
-			},
-		}
+	t.Run("Test data output with a repeat packet does not generate a change notification", func(t *testing.T) {
+		update := createFakeAtcResult(bluetooth.MACAddress{}, "NEW_NAME", []byte{0xaa, 0xbb, 0xcc, 0x11, 0x22, 0x34, 0x01, 0x14, 0x29, 0x59, 0x0b, 0xc2, 0x13})
 		expectedPacket := AtcPacket{
 			Temperature: 27.6,
 			Humidity:    41,
@@ -90,4 +54,20 @@ func TestAtcSensor(t *testing.T) {
 		assert.Nil(t, err2)
 		assert.Equal(t, expectedPacket, actual)
 	})
+}
+
+func createFakeAtcResult(mac bluetooth.MACAddress, name string, payload []byte) *bluetooth.ScanResult {
+	return &bluetooth.ScanResult{
+		Address: mac,
+		RSSI:    50,
+		AdvertisementPayload: &bluetooth.InternalAdvertisementFields{
+			AdvertisementFields: bluetooth.AdvertisementFields{
+				LocalName:    name,
+				ServiceUUIDs: []bluetooth.UUID{},
+				ServiceData: map[string][]byte{
+					"0000181a-0000-1000-8000-00805f9b34fb": payload,
+				},
+			},
+		},
+	}
 }
