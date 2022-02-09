@@ -14,7 +14,7 @@ const BattByte0 = 9
 
 type AtcSensor struct {
 	name string
-	mac bluetooth.MAC
+	mac  bluetooth.MAC
 	uuid bluetooth.UUID
 	data []byte
 	temp float32
@@ -36,12 +36,12 @@ func NewATCSensor(mac bluetooth.MAC) *AtcSensor {
 		name: "UNKNOWN",
 		uuid: uuid,
 		data: nil,
-		mac: mac,
+		mac:  mac,
 	}
 	return n
 }
 
-func (b *AtcSensor) getTemperature() (float32) {
+func (b *AtcSensor) getTemperature() float32 {
 	decimal := (uint16(b.data[TempByte0]) * 256) + uint16(b.data[TempByte1])
 	return float32(decimal) / 10
 }
@@ -55,7 +55,7 @@ func (b *AtcSensor) getBattery() (value float32) {
 }
 
 // Will return UNKNOWN if name is not known.
-func (b *AtcSensor) Name() string  {
+func (b *AtcSensor) Name() string {
 	return b.name
 }
 
@@ -79,7 +79,9 @@ func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, fai
 		return
 	}
 
-	if bytes.Compare(b.data, data) != 0 {
+	if len(b.data) < 13 {
+		b.data = data
+	} else if bytes.Compare(b.data[TempByte0:BattByte0], data[TempByte0:BattByte0]) != 0 {
 		b.data = data
 	} else {
 		return
