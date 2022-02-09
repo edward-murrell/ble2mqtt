@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"tinygo.org/x/bluetooth"
 )
 
@@ -10,13 +11,15 @@ type sensorStack map[string]AtcSensor
 
 type appLoop struct {
 	config      *Config
+	logger      log.FieldLogger
 	sensors     sensorStack
 	mqttAdaptor mqttClient
 }
 
-func startListening(adapter *bluetooth.Adapter, sensors sensorStack, config *Config, mqttAdaptor mqttClient) {
+func startListening(logger *log.Logger, adapter *bluetooth.Adapter, sensors sensorStack, config *Config, mqttAdaptor mqttClient) {
 	loop := &appLoop{
 		config:      config,
+		logger:      logger,
 		sensors:     sensors,
 		mqttAdaptor: mqttAdaptor,
 	}
@@ -26,28 +29,28 @@ func startListening(adapter *bluetooth.Adapter, sensors sensorStack, config *Con
 }
 
 func (loop *appLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetooth.ScanResult) {
-	sensor, ok := loop.sensors[blePacket.Address.String()]
+	mac := blePacket.Address.String()
+	sensor, ok := loop.sensors[mac]
 	if !ok {
 		return
 	}
 	change, failure := sensor.UpdateDevice(&blePacket)
 	if failure != nil {
-		println(failure.Error())
+		loop.logger.Errorf("error updating sensor %s: %s", mac, failure)
 	}
 	if change {
 		jsonBytes, err := json.Marshal(sensor.Packet())
 		if err != nil {
-			fmt.Printf("error marshalling packet: %s", err)
+			loop.logger.Errorf("error marshalling packet: %s", err)
 			return
 		}
 
 		topic := fmt.Sprintf(loop.config.MQTT.Path, sensor.Name()) // TODO: Move into sensor?
-		fmt.Printf("Publishing to topic %s: %s...", topic, string(jsonBytes))
 		success := loop.mqttAdaptor.Publish(topic, jsonBytes)
 		if !success {
-			fmt.Printf("failed\n")
+			loop.logger.Errorf("Failed to publish to topic %s, data %s.", topic, string(jsonBytes))
 		} else {
-			fmt.Printf("success\n")
+			loop.logger.Infof("Published to topic %s, data %s", topic, string(jsonBytes))
 		}
 	}
 }

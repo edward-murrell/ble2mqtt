@@ -64,13 +64,13 @@ func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, fai
 
 	data, pErr := update.GetServiceData(b.uuid)
 	if pErr != nil {
-		failure = fmt.Errorf("recieved empty data for %s", UUID)
+		failure = fmt.Errorf("service data for UUID %s not found in scan packet", UUID)
 		change = false
 		return
 	}
 
 	if len(data) < 13 {
-		failure = fmt.Errorf("recieved service on UUID %s for ATC that it doesn't care about", UUID)
+		failure = fmt.Errorf("service data in UUID %s is too short", UUID)
 		change = false
 		return
 	}

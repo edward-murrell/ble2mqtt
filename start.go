@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gobot.io/x/gobot/platforms/mqtt"
 	"strings"
 	"tinygo.org/x/bluetooth"
@@ -11,6 +12,8 @@ import (
 func main() {
 	config, confErr := getConfig()
 	panicCheck("loading configuration", confErr)
+
+	logger := getLogger(config)
 
 	adapter, contErr := getController(config)
 	panicCheck("enabling BLE controller", contErr)
@@ -21,7 +24,17 @@ func main() {
 	sensors, senErr := getSensors(config)
 	panicCheck("loading sensors", senErr)
 
-	startListening(adapter, sensors, config, mqttAdaptor)
+	startListening(logger, adapter, sensors, config, mqttAdaptor)
+}
+
+func getLogger(config *Config) *log.Logger {
+	logger := log.New()
+	log.SetFormatter(&log.TextFormatter{
+		DisableTimestamp: false,
+		FullTimestamp: true,
+	})
+	logger.SetLevel(log.DebugLevel)
+	return logger
 }
 
 func getController(config *Config) (*bluetooth.Adapter, error) {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"tinygo.org/x/bluetooth"
@@ -9,6 +11,7 @@ import (
 func Test_scanLoop(t *testing.T) {
 	adapter := &bluetooth.Adapter{}
 	mqtt := &FakeMqtt{}
+	logger, logBuffer := NewFakeLogger()
 	app := &appLoop{
 		config: &Config{
 			Sensors: []SensorConfig{},
@@ -16,7 +19,8 @@ func Test_scanLoop(t *testing.T) {
 				Path: "sensor/%s/state",
 			},
 		},
-		sensors: NewSensorStack("AA:BB:CC:11:22:34"),
+		logger:      logger,
+		sensors:     NewSensorStack("AA:BB:CC:11:22:34"),
 		mqttAdaptor: mqtt,
 	}
 
@@ -40,6 +44,7 @@ func Test_scanLoop(t *testing.T) {
 		app.handlePacket(adapter, blePacket)
 
 		assert.Equal(t, &PubStore{"sensor/TEST_SENSOR/state", []byte(`{"temperature":28,"humidity":41,"battery":89}`)}, mqtt.Publishes[0])
+		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"` + "\n", logBuffer.String())
 	})
 }
 
@@ -56,7 +61,7 @@ func (m *FakeMqtt) Publish(topic string, message []byte) bool {
 	return true
 }
 
-func NewSensorStack(macs... string) sensorStack  {
+func NewSensorStack(macs ...string) sensorStack {
 	sensors := make(sensorStack)
 	for _, mac := range macs {
 		parsedMac, _ := bluetooth.ParseMAC(mac)
@@ -64,3 +69,20 @@ func NewSensorStack(macs... string) sensorStack  {
 	}
 	return sensors
 }
+
+func NewFakeLogger() (*log.Logger, *bytes.Buffer) {
+	output := new(bytes.Buffer)
+	return &log.Logger{
+		Out:          output,
+		Formatter:    &log.TextFormatter{
+			DisableTimestamp: true,
+			FullTimestamp: false,
+		},
+		Hooks:        make(log.LevelHooks),
+		Level:        log.DebugLevel,
+		ExitFunc:     fakeExit,
+		ReportCaller: false,
+	}, output
+}
+
+func fakeExit(_ int) {}
