@@ -7,6 +7,10 @@ import (
 )
 
 const UUID = "0000181a-0000-1000-8000-00805f9b34fb"
+const TempByte0 = 6
+const TempByte1 = 7
+const HumiByte0 = 8
+const BattByte0 = 9
 
 type AtcSensor struct {
 	name string
@@ -38,16 +42,16 @@ func NewATCSensor(mac bluetooth.MAC) *AtcSensor {
 }
 
 func (b *AtcSensor) getTemperature() (float32) {
-	decimal := (uint16(b.data[6]) * 256) + uint16(b.data[7])
+	decimal := (uint16(b.data[TempByte0]) * 256) + uint16(b.data[TempByte1])
 	return float32(decimal) / 10
 }
 
 func (b *AtcSensor) getHumidity() (value float32) {
-	return float32(b.data[8])
+	return float32(b.data[HumiByte0])
 }
 
 func (b *AtcSensor) getBattery() (value float32) {
-	return float32(b.data[9])
+	return float32(b.data[BattByte0])
 }
 
 // Will return UNKNOWN if name is not known.
