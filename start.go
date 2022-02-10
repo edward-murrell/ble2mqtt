@@ -3,9 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"gobot.io/x/gobot/platforms/mqtt"
-	"os"
 	"strings"
 	"tinygo.org/x/bluetooth"
 )
@@ -28,19 +26,7 @@ func main() {
 	startListening(logger, adapter, sensors, config, mqttAdaptor)
 }
 
-func getLogger(config *Config) *log.Logger {
-	return &log.Logger{
-		Out:          os.Stdout,
-		Formatter:    &log.TextFormatter{
-			DisableTimestamp: false,
-			FullTimestamp: true,
-		},
-		Hooks:        make(log.LevelHooks),
-		Level:        log.DebugLevel,
-		ExitFunc:     os.Exit,
-		ReportCaller: false,
-	}
-}
+
 
 func getController(config *Config) (*bluetooth.Adapter, error) {
 	var controller = bluetooth.DefaultAdapter // TODO, allow other than hci0

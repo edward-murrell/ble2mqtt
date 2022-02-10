@@ -1,6 +1,6 @@
 sensors:
   - mac: A4:C1:38:DB:4D:3C # MAC address of the sensor
-    type: atc # Currently only the type ATC is supported.
+    type: atc # Currently, only the type ATC is supported.
   - mac: A4:C1:38:A0:30:EC
     type: atc
 
@@ -8,3 +8,8 @@ mqtt:
   host: 10.0.0.5 # Defaults to localhost
   port: 1883 # Default to 1883
   path: "sensor/%s/state" # %s is replaced with the sensor name
+
+logs:
+  file: stderr # Output file for logs. Can also be set to stdout or stderr - Defaults to stderr
+  timestamp: true # Change to false to show time since program began in seconds instead of timestamp. Default to true.
+  level: error # Must be one of panic, fatal, error, warn, info, debug - Defaults to error

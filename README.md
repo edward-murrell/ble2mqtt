@@ -10,8 +10,8 @@ Copy the example YAML configuration file and modify to suit your installation.
 
 `cp ble2mqtt.conf.example ble2mqtt.conf`
 
-A minimal configuration requires a single sensor input, and will connect to the MQTT server on localhost, port 1833 if
- no other configuration is specified.
+A minimal configuration requires a single sensor input, and will connect to the MQTT server on localhost, port 1883 if
+ no other configuration is specified. This default configuration will log error messages only to stderr.
 
 ```yaml
 sensors:
