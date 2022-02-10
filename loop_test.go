@@ -12,6 +12,9 @@ func Test_scanLoop(t *testing.T) {
 	adapter := &bluetooth.Adapter{}
 	mqtt := &FakeMqtt{}
 	logger, logBuffer := NewFakeLogger()
+
+	mac := bluetooth.MACAddress{MAC: [6]byte{0x34, 0x22, 0x11, 0xcc, 0xbb, 0xaa}}
+
 	app := &appLoop{
 		config: &Config{
 			Sensors: []SensorConfig{},
@@ -20,28 +23,14 @@ func Test_scanLoop(t *testing.T) {
 			},
 		},
 		logger:      logger,
-		sensors:     NewSensorStack("AA:BB:CC:11:22:34"),
+		sensors:     NewSensorStack(mac.String()),
 		mqttAdaptor: mqtt,
 	}
 
 	t.Run("test single update", func(t *testing.T) {
-		blePacket := bluetooth.ScanResult{
-			Address: &bluetooth.Address{
-				MACAddress: bluetooth.MACAddress{MAC: [6]byte{0x34, 0x22, 0x11, 0xcc, 0xbb, 0xaa}},
-			},
-			RSSI: 50,
-			AdvertisementPayload: &bluetooth.InternalAdvertisementFields{
-				AdvertisementFields: bluetooth.AdvertisementFields{
-					LocalName:    "TEST_SENSOR",
-					ServiceUUIDs: []bluetooth.UUID{},
-					ServiceData: map[string][]byte{
-						"0000181a-0000-1000-8000-00805f9b34fb": {0x34, 0x22, 0x11, 0xcc, 0xbb, 0xaa, 0x01, 0x18, 0x29, 0x59, 0x0b, 0xc2, 0x13},
-					},
-				},
-			},
-		}
+		blePacket := createFakeAtcResult(mac, "TEST_SENSOR", []byte{0x34, 0x22, 0x11, 0xcc, 0xbb, 0xaa, 0x01, 0x18, 0x29, 0x59, 0x0b, 0xc2, 0x13})
 
-		app.handlePacket(adapter, blePacket)
+		app.handlePacket(adapter, *blePacket)
 
 		assert.Equal(t, &PubStore{"sensor/TEST_SENSOR/state", []byte(`{"temperature":28,"humidity":41,"battery":89}`)}, mqtt.Publishes[0])
 		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"` + "\n", logBuffer.String())
