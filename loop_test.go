@@ -35,6 +35,17 @@ func Test_scanLoop(t *testing.T) {
 		assert.Equal(t, &PubStore{"sensor/TEST_SENSOR/state", []byte(`{"temperature":28,"humidity":41,"battery":89}`)}, mqtt.Publishes[0])
 		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"` + "\n", logBuffer.String())
 	})
+
+	t.Run("test repeat update repeat does not publish twice", func(t *testing.T) {
+		blePacket := createFakeAtcResult(mac, "TEST_SENSOR", []byte{0x34, 0x22, 0x11, 0xcc, 0xbb, 0xaa, 0x01, 0x18, 0x29, 0x59, 0x0b, 0xc2, 0x13})
+
+		app.handlePacket(adapter, *blePacket)
+		app.handlePacket(adapter, *blePacket)
+
+		assert.Len(t, mqtt.Publishes, 1)
+		assert.Equal(t, &PubStore{"sensor/TEST_SENSOR/state", []byte(`{"temperature":28,"humidity":41,"battery":89}`)}, mqtt.Publishes[0])
+		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"` + "\n", logBuffer.String())
+	})
 }
 
 type FakeMqtt struct {
