@@ -48,7 +48,7 @@ func getController(config *Config) (*bluetooth.Adapter, error) {
 	return controller, conErr
 }
 
-func getSensors(config *Config) (sensorStack, error) {
+func getSensors(config *Config) (*sensorStack, error) {
 	if len(config.Sensors) == 0 {
 		return nil, errors.New("no configured sensors found in configuration file")
 	}
@@ -62,10 +62,10 @@ func getSensors(config *Config) (sensorStack, error) {
 			return nil, fmt.Errorf("fatal error on sensorCfg %d, %s %s", idx+2, parseE.Error(), sensorCfg)
 		}
 		// Parsing ensures that MAC formats are identical.
-		sensors[mac.String()] = *NewATCSensor(mac)
+		sensors[mac.String()] = NewATCSensor(mac)
 	}
 
-	return sensors, nil
+	return &sensors, nil
 }
 
 func getMqttConnection(config *Config) (*mqtt.Adaptor, error) {

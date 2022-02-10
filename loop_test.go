@@ -61,13 +61,13 @@ func (m *FakeMqtt) Publish(topic string, message []byte) bool {
 	return true
 }
 
-func NewSensorStack(macs ...string) sensorStack {
+func NewSensorStack(macs ...string) *sensorStack {
 	sensors := make(sensorStack)
 	for _, mac := range macs {
 		parsedMac, _ := bluetooth.ParseMAC(mac)
-		sensors[mac] = *NewATCSensor(parsedMac)
+		sensors[mac] = NewATCSensor(parsedMac)
 	}
-	return sensors
+	return &sensors
 }
 
 func NewFakeLogger() (*log.Logger, *bytes.Buffer) {

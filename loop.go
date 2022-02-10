@@ -7,16 +7,16 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-type sensorStack map[string]AtcSensor
+type sensorStack map[string]*AtcSensor
 
 type appLoop struct {
 	config      *Config
 	logger      log.FieldLogger
-	sensors     sensorStack
+	sensors     *sensorStack
 	mqttAdaptor mqttClient
 }
 
-func startListening(logger *log.Logger, adapter *bluetooth.Adapter, sensors sensorStack, config *Config, mqttAdaptor mqttClient) {
+func startListening(logger *log.Logger, adapter *bluetooth.Adapter, sensors *sensorStack, config *Config, mqttAdaptor mqttClient) {
 	loop := &appLoop{
 		config:      config,
 		logger:      logger,
@@ -30,7 +30,8 @@ func startListening(logger *log.Logger, adapter *bluetooth.Adapter, sensors sens
 
 func (loop *appLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetooth.ScanResult) {
 	mac := blePacket.Address.String()
-	sensor, ok := loop.sensors[mac]
+	sensors := *loop.sensors
+	sensor, ok := sensors[mac]
 	if !ok {
 		return
 	}
@@ -39,6 +40,7 @@ func (loop *appLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetoot
 		loop.logger.Errorf("error updating sensor %s: %s", mac, failure)
 	}
 	if change {
+		log.Debugf("change detected for %s", mac)
 		jsonBytes, err := json.Marshal(sensor.Packet())
 		if err != nil {
 			loop.logger.Errorf("error marshalling packet: %s", err)
