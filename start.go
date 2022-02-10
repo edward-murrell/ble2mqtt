@@ -57,6 +57,7 @@ func getSensors(config *Config) (*sensorStack, error) {
 func getMqttConnection(config *Config) (*mqtt.Adaptor, error) {
 	address := fmt.Sprintf("tcp://%s:%d", config.MQTT.Host, config.MQTT.Port)
 	mqttAdaptor := mqtt.NewAdaptor(address, "ble2mqtt")
+	mqttAdaptor.SetAutoReconnect(true)
 	mqttError := mqttAdaptor.Connect()
 	return mqttAdaptor, mqttError
 }
