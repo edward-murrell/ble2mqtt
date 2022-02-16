@@ -98,7 +98,7 @@ func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, fai
 		change = true
 	}
 	batt := b.getBattery()
-	if humi != b.batt {
+	if batt != b.batt {
 		b.batt = batt
 		change = true
 	}
