@@ -1,11 +1,12 @@
-BLE 2 MQTT adapter
+# BLE to MQTT daemon
 
-For use with home assistant and Xiaomi Mijia BT sensors running the ATC firmware.
+This daemon listens to BLE broadcasts from Xiaomi Mijia BT sensors running the [ATC](https://github.com/atc1441/ATC_MiThermometer) firmware 
+ and sends the received data to an MQTT server. This is ideal for use with Home Assistant.
 
-This uses Bluetooth controller scanning, and may interfere with active connections. If you have long-running active
- bluetooth connections, it's advisable to have more than one bluetooth adapter.
+This program will put your Bluetooth controller into scan mode, and may interfere with active bluetooth connections.
+If you have long-running active bluetooth connections, it's advisable to have more than one bluetooth adapter.
 
-# 1. Configuration
+## 1. Configuration
 Copy the example YAML configuration file and modify to suit your installation.
 
 `cp ble2mqtt.conf.example ble2mqtt.conf`
@@ -19,7 +20,7 @@ sensors:
     type: atc              # Currently, only the type atc is supported.
 ```
 
-# 2. Home Assistant Configuration file:
+## 2. Home Assistant Configuration file:
 
 Replace ATC_FA1234 with the name of your sensor.
 
@@ -37,11 +38,11 @@ sensor:
     value_template: "{{ value_json.humidity }}"
 ```
 
-# 3. Building
+## 3. Building
 ```
 go get
 go build
 ```
 
-# 4. Running
+## 4. Running
 `./ble2mqtt`
