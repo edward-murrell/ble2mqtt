@@ -6,11 +6,11 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-const UUID = "0000181a-0000-1000-8000-00805f9b34fb"
-const TempByte0 = 6
-const TempByte1 = 7
-const HumiByte0 = 8
-const BattByte0 = 9
+const AtcUUID = "0000181a-0000-1000-8000-00805f9b34fb"
+const AtcTempByte0 = 6
+const AtcTempByte1 = 7
+const AtcHumiByte0 = 8
+const AtcBattByte0 = 9
 
 type AtcSensor struct {
 	name string
@@ -31,7 +31,7 @@ type AtcPacket struct {
 // NewBatteryDriver creates a AtcSensor
 func NewATCSensor(mac bluetooth.MAC) *AtcSensor {
 
-	uuid, _ := bluetooth.ParseUUID(UUID)
+	uuid, _ := bluetooth.ParseUUID(AtcUUID)
 	n := &AtcSensor{
 		name: "UNKNOWN",
 		uuid: uuid,
@@ -42,16 +42,16 @@ func NewATCSensor(mac bluetooth.MAC) *AtcSensor {
 }
 
 func (b *AtcSensor) getTemperature() float32 {
-	decimal := (uint16(b.data[TempByte0]) * 256) + uint16(b.data[TempByte1])
+	decimal := (uint16(b.data[AtcTempByte0]) * 256) + uint16(b.data[AtcTempByte1])
 	return float32(decimal) / 10
 }
 
 func (b *AtcSensor) getHumidity() (value float32) {
-	return float32(b.data[HumiByte0])
+	return float32(b.data[AtcHumiByte0])
 }
 
 func (b *AtcSensor) getBattery() (value float32) {
-	return float32(b.data[BattByte0])
+	return float32(b.data[AtcBattByte0])
 }
 
 // Will return UNKNOWN if name is not known.
@@ -68,20 +68,20 @@ func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, fai
 
 	data, pErr := update.GetServiceData(b.uuid)
 	if pErr != nil {
-		failure = fmt.Errorf("service data for UUID %s not found in scan packet", UUID)
+		failure = fmt.Errorf("service data for AtcUUID %s not found in scan packet", AtcUUID)
 		change = false
 		return
 	}
 
 	if len(data) < 13 {
-		failure = fmt.Errorf("service data in UUID %s is too short", UUID)
+		failure = fmt.Errorf("service data in AtcUUID %s is too short", AtcUUID)
 		change = false
 		return
 	}
 
 	if len(b.data) < 13 {
 		b.data = data
-	} else if bytes.Compare(b.data[TempByte0:BattByte0], data[TempByte0:BattByte0]) != 0 {
+	} else if bytes.Compare(b.data[AtcTempByte0:AtcBattByte0], data[AtcTempByte0:AtcBattByte0]) != 0 {
 		b.data = data
 	} else {
 		return

@@ -3,6 +3,8 @@ sensors:
     type: atc # Currently, only the type ATC is supported.
   - mac: A4:C1:38:A0:30:EC
     type: atc
+  - mac: C4:7C:AA:BB:CC:11
+    type: miflora
 
 mqtt:
   host: 10.0.0.5 # Defaults to localhost
