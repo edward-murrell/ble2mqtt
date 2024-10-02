@@ -66,8 +66,8 @@ func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, fai
 		change = true
 	}
 
-	data, pErr := update.GetServiceData(b.uuid)
-	if pErr != nil {
+	data := extractServiceData(update, b.uuid)
+	if data == nil {
 		failure = fmt.Errorf("service data for UUID %s not found in scan packet", UUID)
 		change = false
 		return
@@ -104,6 +104,15 @@ func (b *AtcSensor) UpdateDevice(update *bluetooth.ScanResult) (change bool, fai
 	}
 
 	return
+}
+
+func extractServiceData(update *bluetooth.ScanResult, serviceUUID bluetooth.UUID) []byte {
+	for _, elem := range update.ServiceData() {
+		if elem.UUID == serviceUUID {
+			return elem.Data
+		}
+	}
+	return nil
 }
 
 func (b *AtcSensor) Packet() AtcPacket {

@@ -13,7 +13,8 @@ func Test_scanLoop(t *testing.T) {
 	mqtt := &FakeMqtt{}
 	logger, logBuffer := NewFakeLogger()
 
-	mac := bluetooth.MACAddress{MAC: [6]byte{0x34, 0x22, 0x11, 0xcc, 0xbb, 0xaa}}
+	macAdd, _ := bluetooth.ParseMAC("34:22:11:CC:BB:AA")
+	mac := bluetooth.Address{MACAddress: bluetooth.MACAddress{MAC: macAdd}}
 
 	app := &appLoop{
 		config: &Config{
@@ -33,7 +34,7 @@ func Test_scanLoop(t *testing.T) {
 		app.handlePacket(adapter, *blePacket)
 
 		assert.Equal(t, &PubStore{"sensor/TEST_SENSOR/state", []byte(`{"temperature":28,"humidity":41,"battery":89}`)}, mqtt.Publishes[0])
-		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"` + "\n", logBuffer.String())
+		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"`+"\n", logBuffer.String())
 	})
 
 	t.Run("test repeat update repeat does not publish twice", func(t *testing.T) {
@@ -44,7 +45,7 @@ func Test_scanLoop(t *testing.T) {
 
 		assert.Len(t, mqtt.Publishes, 1)
 		assert.Equal(t, &PubStore{"sensor/TEST_SENSOR/state", []byte(`{"temperature":28,"humidity":41,"battery":89}`)}, mqtt.Publishes[0])
-		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"` + "\n", logBuffer.String())
+		assert.Equal(t, `level=info msg="Published to topic sensor/TEST_SENSOR/state, data {\"temperature\":28,\"humidity\":41,\"battery\":89}"`+"\n", logBuffer.String())
 	})
 }
 
@@ -73,10 +74,10 @@ func NewSensorStack(macs ...string) *sensorStack {
 func NewFakeLogger() (*log.Logger, *bytes.Buffer) {
 	output := new(bytes.Buffer)
 	return &log.Logger{
-		Out:          output,
-		Formatter:    &log.TextFormatter{
+		Out: output,
+		Formatter: &log.TextFormatter{
 			DisableTimestamp: true,
-			FullTimestamp: false,
+			FullTimestamp:    false,
 		},
 		Hooks:        make(log.LevelHooks),
 		Level:        log.DebugLevel,
