@@ -44,5 +44,10 @@ go get
 go build
 ```
 
+Alternatively, use a docker image to target a specific Debian version:
+```
+docker run --rm -it -w /build -v $PWD:/build golang:1.21-bullseye go build -buildvcs=false  -a -installsuffix cgo -o ble2mqtt .
+```
+
 ## 4. Running
 `./ble2mqtt`
