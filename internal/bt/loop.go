@@ -11,7 +11,7 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-type SensorStack map[string]*adapt.AtcSensor
+type SensorStack map[string]adapt.Device
 
 type AppLoop struct {
 	adaptor     *bluetooth.Adapter
@@ -49,7 +49,7 @@ func (loop *AppLoop) handlePacket(adapter *bluetooth.Adapter, blePacket bluetoot
 	}
 	if change {
 		log.Debugf("change detected for %s", mac)
-		jsonBytes, err := json.Marshal(sensor.Packet())
+		jsonBytes, err := json.Marshal(sensor.GetState())
 		if err != nil {
 			loop.logger.Error("error marshalling packet", "error", err.Error())
 			return

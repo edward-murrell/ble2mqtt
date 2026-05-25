@@ -12,7 +12,7 @@ type Config struct {
 
 type SensorConfig struct {
 	MAC  string
-	Type string `default:"atc"`
+	Type string // One of meater or atc
 }
 
 type LoggingConfig struct {

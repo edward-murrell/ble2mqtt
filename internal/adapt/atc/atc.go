@@ -1,4 +1,4 @@
-package adapt
+package atc
 
 import (
 	"bytes"
@@ -115,7 +115,7 @@ func extractServiceData(update *bluetooth.ScanResult, serviceUUID bluetooth.UUID
 	return nil
 }
 
-func (b *AtcSensor) Packet() AtcPacket {
+func (b *AtcSensor) GetState() any {
 	// If GetPacket is called before data is ready, then don't crash.
 	if len(b.data) < 13 || b.name == "UNKNOWN" {
 		return AtcPacket{}

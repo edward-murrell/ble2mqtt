@@ -1,4 +1,4 @@
-package adapt
+package atc
 
 import (
 	"github.com/stretchr/testify/assert"

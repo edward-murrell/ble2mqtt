@@ -1,7 +1,8 @@
 package bootstrap
 
 import (
-	"ble2mqtt/internal/adapt"
+	"ble2mqtt/internal/adapt/atc"
+	"ble2mqtt/internal/adapt/meater"
 	"ble2mqtt/internal/bt"
 	"ble2mqtt/internal/config"
 	"ble2mqtt/internal/runner"
@@ -57,9 +58,15 @@ func getSensors(config *config.Config) (*bt.SensorStack, error) {
 			return nil, fmt.Errorf("fatal error on sensorCfg %d, %s %s", idx+2, parseE.Error(), sensorCfg)
 		}
 		// Parsing ensures that MAC formats are identical.
-		sensors[mac.String()] = adapt.NewATCSensor(mac)
+		switch sensorCfg.Type {
+		case "atc":
+			sensors[mac.String()] = atc.NewATCSensor(mac)
+		case "meater":
+			sensors[mac.String()] = meater.NewMeaterSensor(mac)
+		default:
+			return nil, fmt.Errorf("unknown sensorCfg type: %s", sensorCfg.Type)
+		}
 	}
-
 	return &sensors, nil
 }
 
@@ -69,10 +76,4 @@ func getMqttConnection(config *config.Config) (*mqtt.Adaptor, error) {
 	mqttAdaptor.SetAutoReconnect(true)
 	mqttError := mqttAdaptor.Connect()
 	return mqttAdaptor, mqttError
-}
-
-func panicCheck(action string, err error) {
-	if err != nil {
-		panic("Failed while " + action + ": " + err.Error())
-	}
 }
