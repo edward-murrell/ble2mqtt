@@ -1,45 +1,54 @@
-package main
+package bootstrap
 
 import (
+	"ble2mqtt/internal/adapt"
+	"ble2mqtt/internal/bt"
+	"ble2mqtt/internal/config"
+	"ble2mqtt/internal/runner"
 	"errors"
 	"fmt"
 	"gobot.io/x/gobot/platforms/mqtt"
+	"log/slog"
 	"strings"
 	"tinygo.org/x/bluetooth"
 )
 
-func main() {
-	config, confErr := getConfig()
-	panicCheck("loading configuration", confErr)
+func MakeTasks(cfg *config.Config, logger *slog.Logger) (*runner.RunMap, error) {
+	// Move all this into a bootstrap
+	adapter, contErr := MakeController(cfg)
+	if contErr != nil {
+		return nil, contErr
+	}
 
-	logger := getLogger(config)
+	mqttAdaptor, mqttError := getMqttConnection(cfg)
+	if mqttError != nil {
+		return nil, mqttError
+	}
 
-	adapter, contErr := getController(config)
-	panicCheck("enabling BLE controller", contErr)
+	sensors, senErr := getSensors(cfg)
+	if senErr != nil {
+		return nil, senErr
+	}
 
-	mqttAdaptor, mqttError := getMqttConnection(config)
-	panicCheck("creating MQTT connection", mqttError)
+	loop := bt.NewAppLoop(cfg, logger, adapter, sensors, mqttAdaptor)
 
-	sensors, senErr := getSensors(config)
-	panicCheck("loading sensors", senErr)
-
-	startListening(logger, adapter, sensors, config, mqttAdaptor)
+	return &runner.RunMap{
+		"loop": loop.Run,
+	}, nil
 }
 
-
-
-func getController(config *Config) (*bluetooth.Adapter, error) {
+func MakeController(config *config.Config) (*bluetooth.Adapter, error) {
 	var controller = bluetooth.DefaultAdapter // TODO, allow other than hci0
 	conErr := controller.Enable()
 	return controller, conErr
 }
 
-func getSensors(config *Config) (*sensorStack, error) {
+func getSensors(config *config.Config) (*bt.SensorStack, error) {
 	if len(config.Sensors) == 0 {
 		return nil, errors.New("no configured sensors found in configuration file")
 	}
 
-	sensors := make(sensorStack, len(config.Sensors))
+	sensors := make(bt.SensorStack, len(config.Sensors))
 
 	for idx, sensorCfg := range config.Sensors {
 		rawMac := strings.Trim(sensorCfg.MAC, " ")
@@ -48,13 +57,13 @@ func getSensors(config *Config) (*sensorStack, error) {
 			return nil, fmt.Errorf("fatal error on sensorCfg %d, %s %s", idx+2, parseE.Error(), sensorCfg)
 		}
 		// Parsing ensures that MAC formats are identical.
-		sensors[mac.String()] = NewATCSensor(mac)
+		sensors[mac.String()] = adapt.NewATCSensor(mac)
 	}
 
 	return &sensors, nil
 }
 
-func getMqttConnection(config *Config) (*mqtt.Adaptor, error) {
+func getMqttConnection(config *config.Config) (*mqtt.Adaptor, error) {
 	address := fmt.Sprintf("tcp://%s:%d", config.MQTT.Host, config.MQTT.Port)
 	mqttAdaptor := mqtt.NewAdaptor(address, "ble2mqtt")
 	mqttAdaptor.SetAutoReconnect(true)

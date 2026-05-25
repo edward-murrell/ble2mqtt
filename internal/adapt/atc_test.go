@@ -1,4 +1,4 @@
-package main
+package adapt
 
 import (
 	"github.com/stretchr/testify/assert"

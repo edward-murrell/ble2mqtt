@@ -1,13 +1,13 @@
-package main
+package config
 
 import "github.com/asppj/goconfig"
 
 type Config struct {
 	Controller string `short:"c" default:"hci0" desc:"Controller to use for listening to BLE packets"`
 	Sensors    []SensorConfig
-	MQTT       MqttConfig `id:"mqtt"`
+	MQTT       MqttConfig    `id:"mqtt"`
 	Logging    LoggingConfig `id:"logs"`
-	Config     string `id:"config"`
+	Config     string        `id:"config"`
 }
 
 type SensorConfig struct {
@@ -27,7 +27,7 @@ type MqttConfig struct {
 	Path string `default:"sensor/%s/state"`
 }
 
-func getConfig() (*Config, error) {
+func GetConfig() (*Config, error) {
 	config := &Config{}
 	err := goconfig.Load(config, goconfig.Conf{
 		ConfigFileVariable:  "config",

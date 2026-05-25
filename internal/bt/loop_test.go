@@ -1,4 +1,4 @@
-package main
+package bt
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ func Test_scanLoop(t *testing.T) {
 	macAdd, _ := bluetooth.ParseMAC("34:22:11:CC:BB:AA")
 	mac := bluetooth.Address{MACAddress: bluetooth.MACAddress{MAC: macAdd}}
 
-	app := &appLoop{
+	app := &AppLoop{
 		config: &Config{
 			Sensors: []SensorConfig{},
 			MQTT: MqttConfig{
@@ -62,8 +62,8 @@ func (m *FakeMqtt) Publish(topic string, message []byte) bool {
 	return true
 }
 
-func NewSensorStack(macs ...string) *sensorStack {
-	sensors := make(sensorStack)
+func NewSensorStack(macs ...string) *SensorStack {
+	sensors := make(SensorStack)
 	for _, mac := range macs {
 		parsedMac, _ := bluetooth.ParseMAC(mac)
 		sensors[mac] = NewATCSensor(parsedMac)
