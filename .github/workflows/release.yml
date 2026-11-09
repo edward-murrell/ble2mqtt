@@ -87,7 +87,9 @@ jobs:
           apt-get install -y ./out/*.deb
           test -f /lib/systemd/system/ble2mqtt.service || test -f /usr/lib/systemd/system/ble2mqtt.service
           getent group bluetooth
-          zcat -f /usr/share/doc/ble2mqtt/examples/ble2mqtt.conf.example* > /etc/ble2mqtt/ble2mqtt.conf
+          # Ubuntu container images skip /usr/share/doc, so take the example from the package.
+          dpkg-deb --fsys-tarfile out/*.deb \
+            | tar -xO ./usr/share/doc/ble2mqtt/examples/ble2mqtt.conf.example > /etc/ble2mqtt/ble2mqtt.conf
           # The container has no D-Bus or Bluetooth, so a good run gets past the
           # config and stops when it tries to enable the controller.
           BLE2MQTT_CONFIG=/etc/ble2mqtt/ble2mqtt.conf /usr/sbin/ble2mqtt > run.log 2>&1 || true

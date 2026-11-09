@@ -1,3 +1,9 @@
+ble2mqtt (0.1.1) unstable; urgency=medium
+
+  * Fix the package install test on Ubuntu.
+
+ -- Edward Murrell <edward@murrell.co.nz>  Tue, 10 Nov 2026 08:57:13 +1100
+
 ble2mqtt (0.1.0) unstable; urgency=medium
 
   * First packaged release.
