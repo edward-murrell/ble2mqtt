@@ -1,0 +1,5 @@
+ble2mqtt (0.1.0) unstable; urgency=medium
+
+  * First packaged release.
+
+ -- Edward Murrell <edward@murrell.co.nz>  Mon, 09 Nov 2026 20:30:00 +1100

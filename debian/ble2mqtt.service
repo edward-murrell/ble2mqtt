@@ -1,0 +1,35 @@
+[Unit]
+Description=Forward BLE sensor broadcasts to MQTT
+Documentation=https://github.com/edward-murrell/ble2mqtt
+After=bluetooth.target network-online.target
+Wants=bluetooth.target network-online.target
+# Stay stopped until the sensors are configured.
+ConditionPathExists=/etc/ble2mqtt/ble2mqtt.conf
+
+[Service]
+Environment=BLE2MQTT_CONFIG=/etc/ble2mqtt/ble2mqtt.conf
+ExecStart=/usr/sbin/ble2mqtt
+Restart=on-failure
+RestartSec=10
+
+# BlueZ allows members of the bluetooth group to scan over D-Bus.
+DynamicUser=yes
+SupplementaryGroups=bluetooth
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

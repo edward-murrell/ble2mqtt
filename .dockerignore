@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+debian
+packaging
+out
+TODO
+*.md
+ble2mqtt.conf

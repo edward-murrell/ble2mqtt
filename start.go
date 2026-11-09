@@ -26,8 +26,6 @@ func main() {
 	startListening(logger, adapter, sensors, config, mqttAdaptor)
 }
 
-
-
 func getController(config *Config) (*bluetooth.Adapter, error) {
 	var controller = bluetooth.DefaultAdapter // TODO, allow other than hci0
 	conErr := controller.Enable()

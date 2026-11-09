@@ -38,16 +38,34 @@ sensor:
     value_template: "{{ value_json.humidity }}"
 ```
 
-## 3. Building
+## 3. Installing
+
+### Debian and Ubuntu package
+The package installs a systemd service that reads `/etc/ble2mqtt/ble2mqtt.conf`.
+The service stays stopped until that file exists.
+
 ```
-go get
+sudo apt install ble2mqtt
+sudo cp /usr/share/doc/ble2mqtt/examples/ble2mqtt.conf.example /etc/ble2mqtt/ble2mqtt.conf
+sudo editor /etc/ble2mqtt/ble2mqtt.conf
+sudo systemctl start ble2mqtt
+```
+
+### Docker
+Images for amd64, arm64 and arm/v7 are on GHCR.
+The container talks to BlueZ on the host, so mount the host's D-Bus socket.
+
+```
+docker run -d --name ble2mqtt --restart unless-stopped \
+  -v /run/dbus:/run/dbus:ro \
+  -v $PWD/ble2mqtt.conf:/etc/ble2mqtt/ble2mqtt.conf:ro \
+  ghcr.io/edward-murrell/ble2mqtt:latest
+```
+
+## 4. Building
+```
 go build
+./ble2mqtt
 ```
 
-Alternatively, use a docker image to target a specific Debian version:
-```
-docker run --rm -it -w /build -v $PWD:/build golang:1.21-bullseye go build -buildvcs=false  -a -installsuffix cgo -o ble2mqtt .
-```
-
-## 4. Running
-`./ble2mqtt`
+Set `BLE2MQTT_CONFIG` or pass `--config` to read a config file other than `./ble2mqtt.conf`.

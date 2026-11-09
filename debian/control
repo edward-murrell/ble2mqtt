@@ -1,0 +1,23 @@
+Source: ble2mqtt
+Section: net
+Priority: optional
+Maintainer: Edward Murrell <edward@murrell.co.nz>
+# Go is not listed because the distro golang-go is too old on some suites.
+# packaging/build-deb.sh installs the version go.mod asks for.
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/edward-murrell/ble2mqtt
+Vcs-Browser: https://github.com/edward-murrell/ble2mqtt
+Vcs-Git: https://github.com/edward-murrell/ble2mqtt.git
+Rules-Requires-Root: no
+
+Package: ble2mqtt
+Architecture: any
+Depends: ${misc:Depends}, bluez
+Description: Forward BLE sensor broadcasts to an MQTT server
+ ble2mqtt listens for Bluetooth Low Energy broadcasts from Xiaomi Mijia
+ sensors running the ATC firmware. It publishes each reading to an MQTT
+ server as JSON, ready for Home Assistant.
+ .
+ Write a configuration to /etc/ble2mqtt/ble2mqtt.conf, then start the
+ service. An example is in /usr/share/doc/ble2mqtt/examples.

@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+
+export CGO_ENABLED = 0
+export GOTOOLCHAIN = local
+export GOFLAGS = -trimpath -modcacherw
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	go build -o debian/build/ble2mqtt .
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	go test ./...
+endif
+
+override_dh_auto_install:
+	install -D -m 0755 debian/build/ble2mqtt debian/ble2mqtt/usr/sbin/ble2mqtt
+	install -d -m 0755 debian/ble2mqtt/etc/ble2mqtt
+
+override_dh_auto_clean:
+	rm -rf debian/build
+
+# Go binaries carry DWARF that dwz can't compress.
+override_dh_dwz:

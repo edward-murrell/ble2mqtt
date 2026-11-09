@@ -1,0 +1,149 @@
+name: Release
+
+# Push a version tag to build native .deb packages on every supported release
+# (amd64 + arm64), install-test each one in a clean container, attach them to
+# the GitHub release and tell the central packages repo to republish. It also
+# pushes a multi-arch container image to GHCR.
+# Run it by hand (Actions -> Release -> Run workflow) to build and test without releasing.
+on:
+  push:
+    tags: ["v*", "[0-9]*.[0-9]*"]     # v1.2.0 or 1.2.0
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  PACKAGES_REPO: edward-murrell/packages
+  IMAGE: ghcr.io/${{ github.repository_owner }}/ble2mqtt
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        name: Work out the version (tag must match debian/changelog)
+        run: |
+          CHANGELOG_VERSION=$(dpkg-parsechangelog -S Version)
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            if [ "$VERSION" != "$CHANGELOG_VERSION" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME doesn't match debian/changelog version $CHANGELOG_VERSION"; exit 1
+            fi
+          else
+            VERSION="$CHANGELOG_VERSION"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  deb:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        target:                                  # suite name must match the central repo's SUITES
+          - { suite: jammy,    image: "ubuntu:22.04" }
+          - { suite: noble,    image: "ubuntu:24.04" }
+          - { suite: bookworm, image: "debian:12" }
+          - { suite: trixie,   image: "debian:13" }
+        arch: [amd64, arm64]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    container: ${{ matrix.target.image }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: packaging/build-deb.sh "${{ needs.version.outputs.version }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: deb-${{ matrix.target.suite }}-${{ matrix.arch }}
+          path: out/*.deb
+          if-no-files-found: error
+
+  deb-test:
+    needs: deb
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { suite: jammy,    image: "ubuntu:22.04" }
+          - { suite: noble,    image: "ubuntu:24.04" }
+          - { suite: bookworm, image: "debian:12" }
+          - { suite: trixie,   image: "debian:13" }
+        arch: [amd64, arm64]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    container: ${{ matrix.target.image }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: deb-${{ matrix.target.suite }}-${{ matrix.arch }}
+          path: out
+      - name: Install in a clean system and check the config loads
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install -y ./out/*.deb
+          test -f /lib/systemd/system/ble2mqtt.service || test -f /usr/lib/systemd/system/ble2mqtt.service
+          getent group bluetooth
+          zcat -f /usr/share/doc/ble2mqtt/examples/ble2mqtt.conf.example* > /etc/ble2mqtt/ble2mqtt.conf
+          # The container has no D-Bus or Bluetooth, so a good run gets past the
+          # config and stops when it tries to enable the controller.
+          BLE2MQTT_CONFIG=/etc/ble2mqtt/ble2mqtt.conf /usr/sbin/ble2mqtt > run.log 2>&1 || true
+          cat run.log
+          grep -q "enabling BLE controller" run.log \
+            || { echo "::error::ble2mqtt failed before reaching the BLE controller"; exit 1; }
+
+  docker:
+    needs: version
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: github.ref_type == 'tag'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build, and push on tags
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: ${{ github.ref_type == 'tag' }}
+          tags: |
+            ${{ env.IMAGE }}:${{ needs.version.outputs.version }}
+            ${{ env.IMAGE }}:latest
+
+  release:
+    needs: [deb-test, docker]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          # Only the packages. The docker job also uploads a build record that
+          # download-artifact can't extract.
+          pattern: deb-*
+          path: out
+          merge-multiple: true
+      - name: Attach packages to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -l out/
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+          gh release upload "$GITHUB_REF_NAME" out/* --clobber
+      - name: Republish the package repository
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGES_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::PACKAGES_DISPATCH_TOKEN not set; the repo will pick this release up on its nightly run."
+            exit 0
+          fi
+          gh workflow run publish.yml -R "$PACKAGES_REPO"
